@@ -19,89 +19,96 @@
 
 #include "tinyply.h"
 #include <cstring>
+
 using namespace tinyply; // TODO no using in header
 
-// TODO move to generic header?
-constexpr
-unsigned int chash(const char* str, int h = 0)
-{
-  return !str[h] ? 5381 : (chash(str, h+1)*33) ^ str[h];
-}
+namespace stenomesh {
+  // TODO move to generic header?
+  constexpr
+  unsigned int chash(const char* str, int h = 0)
+  {
+    return !str[h] ? 5381 : (chash(str, h+1)*33) ^ str[h];
+  }
 
-template<typename Tmesh>
-Tmesh parsePLY(std::istream &is) {
-  Tmesh mesh;
-  PlyFile ply;
+  template<typename Tmesh>
+  Tmesh parsePLY(std::istream &is) {
+    Tmesh mesh;
+    PlyFile ply;
 
-  ply.parse_header(is);
-  mesh.comments = ply.get_comments();
+    ply.parse_header(is);
+    mesh.comments = ply.get_comments();
 
-  // Tinyply treats parsed data as untyped byte buffers.
-  std::shared_ptr<PlyData> vertices, faces;
+    // Tinyply treats parsed data as untyped byte buffers.
+    std::shared_ptr<PlyData> vertices, faces;
 
 
-  for (auto e : ply.get_elements())
-    switch (chash(e.name.c_str())) {
-    case chash("vertex"):
-      // Extract vertices
-      vertices = ply.request_properties_from_element("vertex", { "x", "y", "z" });
-      break;
-    case chash("face"):
-      // Extract faces, supporting both "vertex_index" and "vertex_indices"
-      for (auto p : e.properties)
-        switch (chash(p.name.c_str())) {
-        case chash("vertex_index"):
-        case chash("vertex_indices"):
-          faces = ply.request_properties_from_element(e.name, { p.name }, 3);
+    for (auto e : ply.get_elements())
+      switch (chash(e.name.c_str())) {
+      case chash("vertex"):
+        // Extract vertices
+        vertices = ply.request_properties_from_element("vertex", { "x", "y", "z" });
         break;
-        }
+      case chash("face"):
+        // Extract faces, supporting both "vertex_index" and "vertex_indices"
+        for (auto p : e.properties)
+          switch (chash(p.name.c_str())) {
+          case chash("vertex_index"):
+          case chash("vertex_indices"):
+            faces = ply.request_properties_from_element(e.name, { p.name }, 3);
+          break;
+          }
+        break;
+      }
+
+    if (!vertices) throw std::runtime_error("Failed parsing vertices from input");
+    if (!faces) throw std::runtime_error("Failed parsing faces from input");
+
+    ply.read(is);
+
+    const size_t vertices_size = vertices->buffer.size_bytes();
+    const size_t vertex_size = vertices_size/vertices->count;
+    switch (vertices->t) {
+    case tinyply::Type::FLOAT64:
+      for (size_t i=0; i<vertices_size; i+=vertex_size) {
+        const auto* v = reinterpret_cast<typename Tmesh:: template vertex_t<double>*>(vertices->buffer.get()+i);
+        mesh.vertices.push_back({
+                                 static_cast<typename Tmesh::float_t>((*v)[0]),
+                                 static_cast<typename Tmesh::float_t>((*v)[1]),
+                                 static_cast<typename Tmesh::float_t>((*v)[2])
+          });
+      }
       break;
+    case tinyply::Type::FLOAT32:
+      mesh.vertices.resize(vertices->count);
+      std::memcpy(mesh.vertices.data(), vertices->buffer.get(), vertices_size);
+      break;
+    default:
+      throw std::runtime_error("Unsupported vertex type");
     }
 
-  if (!vertices) throw std::runtime_error("Failed parsing vertices from input");
-  if (!faces) throw std::runtime_error("Failed parsing faces from input");
-
-  ply.read(is);
-
-  const size_t vertices_size = vertices->buffer.size_bytes();
-  const size_t vertex_size = vertices_size/vertices->count;
-  switch (vertices->t) {
-  case tinyply::Type::FLOAT64:
-    for (size_t i=0; i<vertices_size; i+=vertex_size) {
-      const auto* v = reinterpret_cast<Mesh<3,double>::vertex_t*>(vertices->buffer.get()+i);
-      mesh.vertices.push_back({
-                               static_cast<float>((*v)[0]),
-                               static_cast<float>((*v)[1]),
-                               static_cast<float>((*v)[2])
+    const size_t faces_size = faces->buffer.size_bytes();
+    const size_t face_size = faces_size/faces->count;
+    switch (faces->t) {
+    case tinyply::Type::INT32:
+      for (size_t i=0; i<faces_size; i+=face_size) {
+        const auto* f = reinterpret_cast<typename Tmesh:: template face_t<int32_t>*>(faces->buffer.get()+i);
+        mesh.faces.push_back({
+                              static_cast<typename Tmesh::int_t>((*f)[0]),
+                              static_cast<typename Tmesh::int_t>((*f)[1]),
+                              static_cast<typename Tmesh::int_t>((*f)[2])
         });
+      }
+      break;
+    case tinyply::Type::UINT32:
+      mesh.faces.resize(faces->count);
+      std::memcpy(mesh.faces.data(), faces->buffer.get(), faces_size);
+      break;
+    default:
+      throw std::runtime_error("Unsupported face type");
     }
-    break;
-  case tinyply::Type::FLOAT32:
-    mesh.vertices.resize(vertices->count);
-    std::memcpy(mesh.vertices.data(), vertices->buffer.get(), vertices_size);
-    break;
-  }
 
-  const size_t faces_size = faces->buffer.size_bytes();
-  const size_t face_size = faces_size/faces->count;
-  switch (faces->t) {
-  case tinyply::Type::INT32:
-    for (size_t i=0; i<faces_size; i+=face_size) {
-      const auto* f = reinterpret_cast<Mesh<3>::face_t<int32_t>*>(faces->buffer.get()+i);
-      mesh.faces.push_back({
-                            static_cast<uint32_t>((*f)[0]),
-                            static_cast<uint32_t>((*f)[1]),
-                            static_cast<uint32_t>((*f)[2])
-        });
-    }
-    break;
-  case tinyply::Type::UINT32:
-    mesh.faces.resize(faces->count);
-    std::memcpy(mesh.faces.data(), faces->buffer.get(), faces_size);
-    break;
+    return mesh;
   }
-
-  return mesh;
 }
 
 #endif // PLYIO_HPP

@@ -16,8 +16,13 @@
 
 #include <iostream>
 #include <fstream>
-#include <unistd.h>
 #include <sstream>
+
+#include "stlio.hpp"
+#include "plyio.hpp"
+#include "mesh.hpp"
+
+using namespace stenomesh;
 
 #if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)
 #  include <fcntl.h>
@@ -26,32 +31,6 @@
 #else
 #  define SET_BINARY_MODE(file)
 #endif
-
-#include <array>
-#include <vector>
-
-
-
-template<size_t N, typename Tflt = float>
-struct Mesh
-{
-  typedef Tflt float_t;
-  typedef std::array<Tflt,3> vertex_t;
-  typedef std::vector<vertex_t> vertices_t;
-
-  template <typename T = uint32_t>
-  using face_t = std::array<T, N>;
-
-  template <typename T = uint32_t>
-  using faces_t = std::vector<face_t<T>>;
-
-  vertices_t vertices;
-  faces_t<> faces;
-  std::vector<std::string> comments;
-};
-
-#include "stlio.hpp"
-#include "plyio.hpp"
 
 int main(int argc, char **argv)
 {
