@@ -20,8 +20,6 @@
 #include "tinyply.h"
 #include <cstring>
 
-using namespace tinyply; // TODO no using in header
-
 
 namespace stenomesh {
   // TODO move to generic header?
@@ -57,11 +55,11 @@ namespace stenomesh {
 
 
   template<size_t N, typename Tin, typename Tout>
-  std::vector<std::array<Tout,N>> parse_plydata(PlyData* data) {
+  std::vector<std::array<Tout,N>> parse_plydata(tinyply::PlyData* data) {
     const size_t byte_size = data->buffer.size_bytes();
     const size_t element_size = byte_size/data->count;
 
-    std::vector<std::array<Tout,N>> output; // TODO reserve space
+    std::vector<std::array<Tout,N>> output(data->count);
     for (size_t i=0; i<byte_size; i+=element_size) {
       const auto* v = reinterpret_cast<std::array<Tin,N>*>(data->buffer.get()+i);
       output.push_back(array_cast<Tout, Tin, 3>(*v));
@@ -72,13 +70,13 @@ namespace stenomesh {
   template<typename Tmesh>
   Tmesh parsePLY(std::istream &is) {
     Tmesh mesh;
-    PlyFile ply;
+    tinyply::PlyFile ply;
 
     ply.parse_header(is);
     mesh.comments = ply.get_comments();
 
     // Tinyply treats parsed data as untyped byte buffers.
-    std::shared_ptr<PlyData> vertices, faces;
+    std::shared_ptr<tinyply::PlyData> vertices, faces;
 
 
     for (auto e : ply.get_elements())
