@@ -31,6 +31,9 @@ namespace stenomesh {
     return !str[h] ? 5381 : (chash(str, h+1)*33) ^ str[h];
   }
 
+  template <class T, class M> M get_member_type(M T:: *);
+  #define GET_TYPE_OF(mem) decltype(get_member_type(&mem))
+
   // http://loungecpp.wikidot.com/tips-and-tricks%3aindices
   //#include <array>
   //#include <type_traits>
@@ -101,53 +104,58 @@ namespace stenomesh {
 
     ply.read(is);
 
+    using vertices_t = GET_TYPE_OF(Tmesh::vertices);
+    using float_t = typename vertices_t::value_type::value_type;
     switch (vertices->t) {
     case tinyply::Type::INT8:
-      mesh.vertices = parse_plydata<3, int8_t, typename Tmesh::float_t>(vertices.get());
+      mesh.vertices = parse_plydata<3, int8_t, float_t>(vertices.get());
       break;
     case tinyply::Type::UINT8:
-      mesh.vertices = parse_plydata<3, uint8_t, typename Tmesh::float_t>(vertices.get());
+      mesh.vertices = parse_plydata<3, uint8_t, float_t>(vertices.get());
       break;
     case tinyply::Type::INT16:
-      mesh.vertices = parse_plydata<3, int16_t, typename Tmesh::float_t>(vertices.get());
+      mesh.vertices = parse_plydata<3, int16_t, float_t>(vertices.get());
       break;
     case tinyply::Type::UINT16:
-      mesh.vertices = parse_plydata<3, uint16_t, typename Tmesh::float_t>(vertices.get());
+      mesh.vertices = parse_plydata<3, uint16_t, float_t>(vertices.get());
       break;
     case tinyply::Type::INT32:
-      mesh.vertices = parse_plydata<3, int32_t, typename Tmesh::float_t>(vertices.get());
+      mesh.vertices = parse_plydata<3, int32_t, float_t>(vertices.get());
       break;
     case tinyply::Type::UINT32:
-      mesh.vertices = parse_plydata<3, uint32_t, typename Tmesh::float_t>(vertices.get());
+      mesh.vertices = parse_plydata<3, uint32_t, float_t>(vertices.get());
       break;
     case tinyply::Type::FLOAT64:
-      mesh.vertices = parse_plydata<3, double, typename Tmesh::float_t>(vertices.get());
+      mesh.vertices = parse_plydata<3, double, float_t>(vertices.get());
       break;
     case tinyply::Type::FLOAT32:
-      mesh.vertices = parse_plydata<3, float, typename Tmesh::float_t>(vertices.get());
+      mesh.vertices = parse_plydata<3, float, float_t>(vertices.get());
       break;
     default:
       throw std::runtime_error("Unsupported vertex type");
     }
 
+    using faces_t = GET_TYPE_OF(Tmesh::faces);
+    using idx_t = typename faces_t::value_type::value_type;
+    const size_t face_dim = sizeof(typename faces_t::value_type)/sizeof(idx_t);
     switch (faces->t) {
     case tinyply::Type::INT8:
-      mesh.faces = parse_plydata<Tmesh::face_dim, int8_t, typename Tmesh::int_t>(faces.get());
+      mesh.faces = parse_plydata<face_dim, int8_t, idx_t>(faces.get());
       break;
     case tinyply::Type::UINT8:
-      mesh.faces = parse_plydata<Tmesh::face_dim, uint8_t, typename Tmesh::int_t>(faces.get());
+      mesh.faces = parse_plydata<face_dim, uint8_t, idx_t>(faces.get());
       break;
     case tinyply::Type::INT16:
-      mesh.faces = parse_plydata<Tmesh::face_dim, int16_t, typename Tmesh::int_t>(faces.get());
+      mesh.faces = parse_plydata<face_dim, int16_t, idx_t>(faces.get());
       break;
     case tinyply::Type::UINT16:
-      mesh.faces = parse_plydata<Tmesh::face_dim, uint16_t, typename Tmesh::int_t>(faces.get());
+      mesh.faces = parse_plydata<face_dim, uint16_t, idx_t>(faces.get());
       break;
     case tinyply::Type::INT32:
-      mesh.faces = parse_plydata<Tmesh::face_dim, int32_t, typename Tmesh::int_t>(faces.get());
+      mesh.faces = parse_plydata<face_dim, int32_t, idx_t>(faces.get());
       break;
     case tinyply::Type::UINT32:
-      mesh.faces = parse_plydata<Tmesh::face_dim, uint32_t, typename Tmesh::int_t>(faces.get());
+      mesh.faces = parse_plydata<face_dim, uint32_t, idx_t>(faces.get());
       break;
     default:
       throw std::runtime_error("Unsupported face type");

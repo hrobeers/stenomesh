@@ -22,25 +22,11 @@
 #include <unistd.h>
 
 namespace stenomesh {
-  template<size_t N, typename Tflt = float, typename Tint = uint32_t>
+  template<size_t N, typename float_t = float, typename idx_t = uint32_t>
   struct Mesh
   {
-    const static size_t face_dim = N;
-
-    typedef Tflt float_t;
-    typedef Tint int_t;
-
-    template <typename T = float_t>
-    using vertex_t = std::array<T,3>;
-
-    template <typename T = int_t>
-    using face_t = std::array<T, face_dim>;
-
-    typedef std::vector<vertex_t<>> vertices_t;
-    typedef std::vector<face_t<>> faces_t;
-
-    vertices_t vertices;
-    faces_t faces;
+    std::vector<std::array<float_t,3>> vertices;
+    std::vector<std::array<idx_t,N>> faces;
     std::vector<std::string> comments;
   };
 }
