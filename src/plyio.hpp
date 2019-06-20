@@ -19,16 +19,11 @@
 
 #include "tinyply.h"
 #include <cstring>
+#include "chash.hpp"
 
 
 namespace stenomesh {
   // TODO move to generic header?
-  constexpr
-  unsigned int chash(const char* str, int h = 0)
-  {
-    return !str[h] ? 5381 : (chash(str, h+1)*33) ^ str[h];
-  }
-
   template <class T, class M> M get_member_type(M T:: *);
   #define GET_TYPE_OF(mem) decltype(get_member_type(&mem))
 
@@ -59,7 +54,8 @@ namespace stenomesh {
     const size_t byte_size = data->buffer.size_bytes();
     const size_t element_size = byte_size/data->count;
 
-    std::vector<std::array<Tout,N>> output(data->count);
+    std::vector<std::array<Tout,N>> output;
+    output.reserve(data->count);
     for (size_t i=0; i<byte_size; i+=element_size) {
       const auto* v = reinterpret_cast<std::array<Tin,N>*>(data->buffer.get()+i);
       output.push_back(array_cast<Tout, Tin, 3>(*v));
@@ -68,11 +64,12 @@ namespace stenomesh {
   }
 
   template<typename Tmesh>
-  Tmesh parsePLY(std::istream &is) {
+  Tmesh parsePLY(std::istream &is, std::istream &header_stream) {
     Tmesh mesh;
     tinyply::PlyFile ply;
 
-    ply.parse_header(is);
+    ply.parse_header(header_stream);
+
     mesh.comments = ply.get_comments();
 
     // Tinyply treats parsed data as untyped byte buffers.
@@ -160,6 +157,11 @@ namespace stenomesh {
     }
 
     return mesh;
+  }
+
+  template<typename Tmesh>
+  Tmesh parsePLY(std::istream &is) {
+    return parsePLY<Tmesh>(is, is);
   }
 }
 
