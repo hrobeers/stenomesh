@@ -116,8 +116,7 @@ int main(int argc, char **argv)
       //read until 80 bytes
       while((size_t)header_stream.tellp()<80 && !std::cin.eof())
         header_stream.put(std::cin.get());
-      std::cerr << header_stream.str() << std::endl;
-      exit(EXIT_FAILURE);
+      mesh = parseSTL<Mesh<3>>(std::cin, header_stream);
       break;
     }
 

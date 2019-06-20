@@ -23,10 +23,14 @@
 namespace stenomesh {
   // TODO: face streaming?
   // stl_stream >> face;
-  void parseSTL(std::istream &is) {
+  template<typename Tmesh>
+  Tmesh parseSTL(std::istream &is, std::istream &header_stream) {
+    Tmesh mesh;
+
     // 80 byte header
     std::array<char, 80> header;
-    is.read(header.data(), 80);
+    header_stream.read(header.data(), 80);
+
     uint32_t n_faces;
     is.read(reinterpret_cast<char*>(&n_faces), sizeof(n_faces)); // TODO big endian support
 
@@ -44,6 +48,12 @@ namespace stenomesh {
       is.read(reinterpret_cast<char*>(&v2), sizeof(v2));
       is.read(reinterpret_cast<char*>(&v3), sizeof(v3));
 
+      size_t idx = mesh.faces.size();
+      mesh.faces.push_back({idx, idx+1, idx+2});
+      mesh.vertices.push_back(v1);
+      mesh.vertices.push_back(v2);
+      mesh.vertices.push_back(v3);
+
       // the attribute byte count does not signal any byte count.
       // it is used to encode color information (materialise) in just 2 bytes (5bit per color, 32768 colors)
       is.read(reinterpret_cast<char*>(&attr_size), sizeof(attr_size)); // TODO big endian support
@@ -54,6 +64,13 @@ namespace stenomesh {
       std::cerr << "v3: " << v3[0] << " " << v3[1] << " " << v3[2] << " " << std::endl;
       std::cerr << "a:  " << attr_size << std::endl;
     }
+
+    return mesh;
+  }
+
+  template<typename Tmesh>
+  Tmesh parseSTL(std::istream &is) {
+    return parseSTL<Tmesh>(is, is);
   }
 }
 
