@@ -81,10 +81,10 @@ int main(int argc, char **argv)
       }
     }
 
+    /*
     printf("extract=%d; optind=%d\n",
            extract, optind);
 
-    /*
       if (optind >= argc) {
       fprintf(stderr, "Expected argument after options\n");
       exit(EXIT_FAILURE);
@@ -121,6 +121,7 @@ int main(int argc, char **argv)
     }
 
     //ply.write(std::cout, false);
+    writeSTL(mesh, std::cout);
 
     /* Other code omitted */
 

@@ -72,6 +72,29 @@ namespace stenomesh {
   Tmesh parseSTL(std::istream &is) {
     return parseSTL<Tmesh>(is, is);
   }
+
+  template<typename Tmesh>
+  std::ostream& writeSTL(Tmesh mesh, std::ostream &os) {
+    std::array<char,80> header;
+    header.fill(' ');
+    os.write(header.data(), 80);
+
+    uint32_t face_cnt = mesh.faces.size();
+    os.write(reinterpret_cast<char*>(&face_cnt), sizeof(face_cnt));
+
+    std::array<float,3> dummy_normal = {0,0,0};
+    uint16_t dummy_attr = 0;
+
+    for (auto f : mesh.faces) {
+      os.write(reinterpret_cast<char*>(dummy_normal.data()), sizeof(dummy_normal));
+      os.write(reinterpret_cast<char*>(&(mesh.vertices[f[0]])), sizeof(dummy_normal));
+      os.write(reinterpret_cast<char*>(&(mesh.vertices[f[1]])), sizeof(dummy_normal));
+      os.write(reinterpret_cast<char*>(&(mesh.vertices[f[2]])), sizeof(dummy_normal));
+      os.write(reinterpret_cast<char*>(&dummy_attr), sizeof(dummy_attr));
+    }
+
+    return os;
+  }
 }
 
 #endif // STLIO_HPP
