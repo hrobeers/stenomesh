@@ -27,7 +27,7 @@ namespace stenomesh {
   {
     std::vector<std::array<float_t,3>> vertices;
     std::vector<std::array<idx_t,N>> faces;
-    std::vector<std::string> comments;
+    std::string comment;
   };
 }
 

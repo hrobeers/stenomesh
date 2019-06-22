@@ -19,6 +19,7 @@
 
 #include "tinyply.h"
 #include <cstring>
+#include <iterator>
 #include "chash.hpp"
 
 
@@ -70,7 +71,11 @@ namespace stenomesh {
 
     ply.parse_header(header_stream);
 
-    mesh.comments = ply.get_comments();
+    const char* const delim = "\n";
+    std::ostringstream joined;
+    std::copy(ply.get_comments().begin(), ply.get_comments().end(),
+              std::ostream_iterator<std::string>(joined, delim));
+    mesh.comment = joined.str();
 
     // Tinyply treats parsed data as untyped byte buffers.
     std::shared_ptr<tinyply::PlyData> vertices, faces;

@@ -76,7 +76,8 @@ namespace stenomesh {
   template<typename Tmesh>
   std::ostream& writeSTL(Tmesh mesh, std::ostream &os) {
     std::array<char,80> header;
-    header.fill(' ');
+    header.fill(0);
+    mesh.comment.copy(header.data(), 80);
     os.write(header.data(), 80);
 
     uint32_t face_cnt = mesh.faces.size();
