@@ -69,14 +69,18 @@ int main(int argc, char **argv)
     int opt;
     bool extract = false;
     std::string header;
+    std::string steno_msg;
 
-    while ((opt = getopt(argc, argv, "xh:")) != -1) {
+    while ((opt = getopt(argc, argv, "xh:m:")) != -1) {
       switch (opt) {
       case 'x':
         extract = true;
         break;
       case 'h':
         header = optarg;
+        break;
+      case 'm':
+        steno_msg = optarg;
         break;
       default: /* '?' */
         fprintf(stderr, "usage: %s [-x] [-h <header_string>] < meshfile\n",
@@ -124,11 +128,16 @@ int main(int argc, char **argv)
       break;
     }
 
+    // Set the options for writing
     if (header.size()>0)
       mesh.comment = header;
+    if (steno_msg.size()>0)
+      mesh.steno_msg = steno_msg;
 
-    //ply.write(std::cout, false);
-    writeSTL(mesh, std::cout);
+    if (extract)
+      std::cout << mesh.steno_msg;
+    else
+      writeSTL(mesh, std::cout);
 
     /* Other code omitted */
 
