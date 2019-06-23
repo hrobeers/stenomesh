@@ -68,14 +68,18 @@ int main(int argc, char **argv)
     /* parse commandline options */
     int opt;
     bool extract = false;
+    std::string header;
 
-    while ((opt = getopt(argc, argv, "x")) != -1) {
+    while ((opt = getopt(argc, argv, "xh:")) != -1) {
       switch (opt) {
       case 'x':
         extract = true;
         break;
+      case 'h':
+        header = optarg;
+        break;
       default: /* '?' */
-        fprintf(stderr, "Usage: %s [-x] meshfile\n",
+        fprintf(stderr, "usage: %s [-x] [-h <header_string>] < meshfile\n",
                 argv[0]);
         exit(EXIT_FAILURE);
       }
@@ -119,6 +123,9 @@ int main(int argc, char **argv)
       mesh = parseSTL<Mesh<3>>(std::cin, header_stream);
       break;
     }
+
+    if (header.size()>0)
+      mesh.comment = header;
 
     //ply.write(std::cout, false);
     writeSTL(mesh, std::cout);
