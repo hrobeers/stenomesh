@@ -22,6 +22,8 @@
 #include <sstream>
 #include <limits>
 
+#include "vertexio.hpp"
+
 namespace stenomesh {
   // TODO: face streaming?
   // stl_stream >> face;
@@ -82,6 +84,50 @@ namespace stenomesh {
   template<typename Tmesh>
   Tmesh parseSTL(std::istream &is) {
     return parseSTL<Tmesh>(is, is);
+  }
+
+  inline std::istream& read_until(std::istream &is, const char* str) {
+    size_t idx = 0;
+    while (!is.eof()) {
+      char c = is.get();
+      if (str[idx]==0)
+        return is;
+      if (str[idx]==c)
+        idx++;
+      else
+        idx=0;
+    }
+    return is;
+  }
+
+  template<typename Tmesh>
+  Tmesh parseSTL_ascii(std::istream &is) {
+    Tmesh mesh;
+
+    std::array<float, 3> normal;
+    std::array<float, 3> v1;
+    std::array<float, 3> v2;
+    std::array<float, 3> v3;
+
+    while (!is.eof()) {
+      // read_next_vertex(std::istream& str, vertex_t& v)
+      read_until(is, "normal");
+      vertexio::read_next_vertex(is, normal);
+      read_until(is, "vertex");
+      vertexio::read_next_vertex(is, v1);
+      read_until(is, "vertex");
+      vertexio::read_next_vertex(is, v2);
+      read_until(is, "vertex");
+      vertexio::read_next_vertex(is, v3);
+
+      size_t idx = mesh.faces.size()*3;
+      mesh.faces.push_back({idx, idx+1, idx+2});
+      mesh.vertices.push_back(v1);
+      mesh.vertices.push_back(v2);
+      mesh.vertices.push_back(v3);
+    }
+
+    return mesh;
   }
 
   template<typename Tmesh>

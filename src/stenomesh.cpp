@@ -21,6 +21,7 @@
 #include "stlio.hpp"
 #include "plyio.hpp"
 #include "mesh.hpp"
+#include "stringtrim.hpp"
 
 using namespace stenomesh;
 
@@ -104,6 +105,7 @@ int main(int argc, char **argv)
       std::ifstream fs(meshfile, std::fstream::binary);
     */
     Mesh<3> mesh;
+    std::string comment;
 
     const size_t magic_byte_size = 5;
     std::stringstream header_stream;
@@ -113,12 +115,13 @@ int main(int argc, char **argv)
     case chash("PLY"):
       binary_read_until(std::cin, header_stream, "end_header");
       header_stream.seekg(0);
-      // TODO continue reading header
       mesh = parsePLY<Mesh<3>>(std::cin, header_stream);
       break;
     case chash("solid"):
-      std::cerr << "ASCII STL not supported" << std::endl;
-      exit(EXIT_FAILURE);
+      std::getline(std::cin, comment);
+      mesh = parseSTL_ascii<Mesh<3>>(std::cin);
+      ltrim(comment);
+      mesh.comment = comment;
       break;
     default: // Assume binary STL
       //read until 80 bytes
