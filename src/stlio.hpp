@@ -157,7 +157,8 @@ namespace stenomesh {
       os.write(reinterpret_cast<char*>(&(mesh.vertices[f[1]])), sizeof(dummy_normal));
       os.write(reinterpret_cast<char*>(&(mesh.vertices[f[2]])), sizeof(dummy_normal));
 
-      attr_byte_cnt.fill(-1); // -1 = white according to meshlab
+      // Set non used attr byte counts to white after end of message (displays nicer in meshlab)
+      attr_byte_cnt.fill(msg_size? -1 : 0); // -1 = white according to meshlab
       if (!steno_stream.eof())
         steno_stream.read(attr_byte_cnt.data(),2);
       os.write(attr_byte_cnt.data(), sizeof(attr_byte_cnt));

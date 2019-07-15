@@ -7,14 +7,14 @@ DD=${BATS_TEST_DIRNAME}/data
     result=$(cat ${DD}/cube_ascii.ply | ${BD}/stenomesh | sha1sum | awk '{print $1}')
 
     # Verify
-    [ $result == "abd05e321ee94d18f4a50b37e37c4b9bfbf3e2ae" ]
+    [ $result == "aec8e6e997909615b3839d869e716edf2f69537c" ]
 }
 
 @test "convert: binary ply to stl" {
     result=$(cat ${DD}/cube_bin.ply | ${BD}/stenomesh | sha1sum | awk '{print $1}')
 
     # Verify
-    [ $result == "84d8602d88ef49516e17bcc5b863850fe545a7cf" ]
+    [ $result == "a52ea06857ae3e7dfd9c31689c5cf958f48ff524" ]
 }
 
 @test "convert: no header message" {
