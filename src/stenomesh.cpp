@@ -69,11 +69,15 @@ int main(int argc, char **argv)
     /* parse commandline options */
     int opt;
     bool extract = false;
+    bool attr = false;
     std::string header;
     std::string steno_msg;
 
-    while ((opt = getopt(argc, argv, "xh:m:")) != -1) {
+    while ((opt = getopt(argc, argv, "axh:m:")) != -1) {
       switch (opt) {
+      case 'a':
+        attr = true;
+        break;
       case 'x':
         extract = true;
         break;
@@ -84,10 +88,15 @@ int main(int argc, char **argv)
         steno_msg = optarg;
         break;
       default: /* '?' */
-        fprintf(stderr, "usage: %s [-x] [-h <header_string>] < meshfile\n",
+        fprintf(stderr, "usage: %s [-x] [-a] [-h <header_string>] [-m <steno_message>] < meshfile\n",
                 argv[0]);
         exit(EXIT_FAILURE);
       }
+    }
+
+    if (!attr && (extract || steno_msg.size())) {
+      std::cerr << "Only STL attribute encoding is currently supported, use the -a flag as it ensures backwards compatibility." << std::endl;
+      exit(EXIT_FAILURE);
     }
 
     /*
