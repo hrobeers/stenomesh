@@ -21,6 +21,7 @@
 #include <array>
 #include <sstream>
 #include <limits>
+#include <cmath>
 
 #include "vertexio.hpp"
 
@@ -130,6 +131,15 @@ namespace stenomesh {
     return mesh;
   }
 
+  template<typename V>
+  V cross_product(const V &origin, const V &v1, const V &v2) {
+    V a = { v1[0]-origin[0], v1[1]-origin[1], v1[2]-origin[2] };
+    V b = { v2[0]-origin[0], v2[1]-origin[1], v2[2]-origin[2] };
+    V cross = { a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0] };
+    auto length = std::sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2]);
+    return { cross[0]/length,  cross[1]/length, cross[2]/length };
+  }
+
   template<typename Tmesh>
   std::ostream& writeSTL(Tmesh mesh, std::ostream &os) {
     std::array<char,80> header;
@@ -147,15 +157,18 @@ namespace stenomesh {
     steno_stream.write(reinterpret_cast<char*>(&msg_size), sizeof(msg_size));
     steno_stream.write(mesh.steno_msg.c_str(),msg_size);
 
-    std::array<float,3> dummy_normal = {0,0,0};
-
     std::array<char,2> attr_byte_cnt;
 
     for (auto f : mesh.faces) {
-      os.write(reinterpret_cast<char*>(dummy_normal.data()), sizeof(dummy_normal));
-      os.write(reinterpret_cast<char*>(&(mesh.vertices[f[0]])), sizeof(dummy_normal));
-      os.write(reinterpret_cast<char*>(&(mesh.vertices[f[1]])), sizeof(dummy_normal));
-      os.write(reinterpret_cast<char*>(&(mesh.vertices[f[2]])), sizeof(dummy_normal));
+      auto v0 = mesh.vertices[f[0]];
+      auto v1 = mesh.vertices[f[1]];
+      auto v2 = mesh.vertices[f[2]];
+      auto normal = cross_product(v0, v1, v2);
+
+      os.write(reinterpret_cast<char*>(normal.data()), sizeof(normal));
+      os.write(reinterpret_cast<char*>(&(v0)), sizeof(normal));
+      os.write(reinterpret_cast<char*>(&(v1)), sizeof(normal));
+      os.write(reinterpret_cast<char*>(&(v2)), sizeof(normal));
 
       // Set non used attr byte counts to white after end of message (displays nicer in meshlab)
       attr_byte_cnt.fill(msg_size? -1 : 0); // -1 = white according to meshlab
