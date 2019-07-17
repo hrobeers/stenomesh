@@ -1,7 +1,8 @@
 CC = gcc
 CXX = g++
 CFLAGS= -Wall -O3
-CXXFLAGS= -Wall -O0 -g --std=gnu++17
+#CXXFLAGS= -Wall -O0 -g --std=gnu++17
+CXXFLAGS= -O3 --std=gnu++17
 
 default: all
 all:
