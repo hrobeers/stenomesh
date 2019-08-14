@@ -72,8 +72,9 @@ int main(int argc, char **argv)
     bool attr = false;
     std::string header;
     std::string steno_msg;
+    float scale = 1;
 
-    while ((opt = getopt(argc, argv, "axh:m:")) != -1) {
+    while ((opt = getopt(argc, argv, "axh:m:s:")) != -1) {
       switch (opt) {
       case 'a':
         attr = true;
@@ -87,8 +88,11 @@ int main(int argc, char **argv)
       case 'm':
         steno_msg = optarg;
         break;
+      case 's':
+        scale = (float)atof(optarg);
+        break;
       default: /* '?' */
-        fprintf(stderr, "usage: %s [-x] [-a] [-h <header_string>] [-m <steno_message>] < meshfile\n",
+        fprintf(stderr, "usage: %s [-x] [-a] [-h <header_string>] [-m <steno_message>] [-s <scale_factor>] < meshfile\n",
                 argv[0]);
         exit(EXIT_FAILURE);
       }
@@ -149,7 +153,7 @@ int main(int argc, char **argv)
     if (extract)
       std::cout << mesh.steno_msg;
     else
-      writeSTL(mesh, std::cout);
+      writeSTL(mesh, scale, std::cout);
 
     /* Other code omitted */
 

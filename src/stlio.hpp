@@ -140,8 +140,13 @@ namespace stenomesh {
     return { cross[0]/length,  cross[1]/length, cross[2]/length };
   }
 
+  template<typename V>
+  V apply_scale(const V &vertex, float scale) {
+    return { vertex[0]*scale, vertex[1]*scale, vertex[2]*scale };
+  }
+
   template<typename Tmesh>
-  std::ostream& writeSTL(Tmesh mesh, std::ostream &os) {
+  std::ostream& writeSTL(Tmesh mesh, float scale, std::ostream &os) {
     std::array<char,80> header;
     header.fill(0);
     mesh.comment.copy(header.data(), 80);
@@ -160,9 +165,9 @@ namespace stenomesh {
     std::array<char,2> attr_byte_cnt;
 
     for (auto f : mesh.faces) {
-      auto v0 = mesh.vertices[f[0]];
-      auto v1 = mesh.vertices[f[1]];
-      auto v2 = mesh.vertices[f[2]];
+      auto v0 = apply_scale(mesh.vertices[f[0]], scale);
+      auto v1 = apply_scale(mesh.vertices[f[1]], scale);
+      auto v2 = apply_scale(mesh.vertices[f[2]], scale);
       auto normal = cross_product(v0, v1, v2);
 
       os.write(reinterpret_cast<char*>(normal.data()), sizeof(normal));
