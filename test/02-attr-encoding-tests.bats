@@ -29,3 +29,11 @@ DD=${BATS_TEST_DIRNAME}/data
     # Verify not equal to original
     [ "${result}" != "${message}" ]
 }
+
+@test "attr encoding: message from file" {
+    message="$(<${DD}/message.txt)"
+    result=$(cat ${DD}/cube_bin.ply | ${BD}/stenomesh -af ${DD}/message.txt | ${BD}/stenomesh -ax)
+
+    # Verify decoded value
+    [ "${result}" == "${message}" ]
+}

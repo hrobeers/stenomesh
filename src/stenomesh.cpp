@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     std::string steno_msg;
     float scale = 1;
 
-    while ((opt = getopt(argc, argv, "axh:m:s:")) != -1) {
+    while ((opt = getopt(argc, argv, "axh:m:f:s:")) != -1) {
       switch (opt) {
       case 'a':
         attr = true;
@@ -88,11 +88,23 @@ int main(int argc, char **argv)
       case 'm':
         steno_msg = optarg;
         break;
+      case 'f':
+        {
+          std::ifstream t(optarg, std::ifstream::in | std::ifstream::binary);
+
+          t.seekg(0, std::ios::end);
+          steno_msg.reserve(t.tellg());
+          t.seekg(0, std::ios::beg);
+
+          steno_msg.assign((std::istreambuf_iterator<char>(t)),
+                           std::istreambuf_iterator<char>());
+        }
+        break;
       case 's':
         scale = (float)atof(optarg);
         break;
       default: /* '?' */
-        fprintf(stderr, "usage: %s [-x] [-a] [-h <header_string>] [-m <steno_message>] [-s <scale_factor>] < meshfile\n",
+        fprintf(stderr, "usage: %s [-x] [-a] [-h <header_string>] [-m <steno_msg>] [-f <steno_msg_file>] [-s <scale_factor>] < meshfile\n",
                 argv[0]);
         exit(EXIT_FAILURE);
       }
