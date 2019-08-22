@@ -146,7 +146,7 @@ namespace stenomesh {
   }
 
   template<typename Tmesh>
-  std::ostream& writeSTL(Tmesh mesh, float scale, std::ostream &os) {
+  std::ostream& writeSTL(Tmesh mesh, float scale, std::ostream &os, bool ignore_msg_length = false) {
     std::array<char,80> header;
     header.fill(0);
     mesh.comment.copy(header.data(), 80);
@@ -155,7 +155,7 @@ namespace stenomesh {
     uint32_t face_cnt = mesh.faces.size();
     os.write(reinterpret_cast<char*>(&face_cnt), sizeof(face_cnt));
 
-    if (mesh.steno_msg.size()>std::min(face_cnt*2-(int)sizeof(uint32_t),std::numeric_limits<uint32_t>::max()))
+    if (!ignore_msg_length && mesh.steno_msg.size()>std::min(face_cnt*2-(int)sizeof(uint32_t),std::numeric_limits<uint32_t>::max()))
       throw std::runtime_error("Steno message overflows the available storage space");
     std::stringstream steno_stream;
     uint32_t msg_size = mesh.steno_msg.size();

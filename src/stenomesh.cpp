@@ -72,9 +72,10 @@ int main(int argc, char **argv)
     bool attr = false;
     std::string header;
     std::string steno_msg;
+    bool ignore_length = false;
     float scale = 1;
 
-    while ((opt = getopt(argc, argv, "axh:m:f:s:")) != -1) {
+    while ((opt = getopt(argc, argv, "axh:m:f:is:")) != -1) {
       switch (opt) {
       case 'a':
         attr = true;
@@ -99,6 +100,9 @@ int main(int argc, char **argv)
           steno_msg.assign((std::istreambuf_iterator<char>(t)),
                            std::istreambuf_iterator<char>());
         }
+        break;
+      case 'i':
+        ignore_length = true;
         break;
       case 's':
         scale = (float)atof(optarg);
@@ -165,7 +169,7 @@ int main(int argc, char **argv)
     if (extract)
       std::cout << mesh.steno_msg;
     else
-      writeSTL(mesh, scale, std::cout);
+      writeSTL(mesh, scale, std::cout, ignore_length);
 
     /* Other code omitted */
 
