@@ -55,3 +55,13 @@ DD=${BATS_TEST_DIRNAME}/data
     # Verify match of first 80 bytes
     [ "$(echo $result | head -c 80)" == "$(echo $header_message | head -c 80)" ]
 }
+
+@test "convert: scale" {
+    # Create named pipes for communication
+    stl_out=$(mktemp -t stenomesh.test.out.XXXXXXXXX.stl --dry-run)
+
+    cat ${DD}/cube_bin.ply | ${BD}/stenomesh -s 1000 > $stl_out
+    result=$(echo '<!DOCTYPE FilterScript><FilterScript><xmlfilter name="Compute Geometric Measures"/></FilterScript>' | meshlabserver -i $stl_out -s /dev/stdin 2> /dev/null)
+
+    [[ $result == *"Bounding Box Size 1000.000000  1000.000000  1000.000000"* ]]
+}
