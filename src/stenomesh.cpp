@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     std::string header;
     std::string steno_msg;
     bool ignore_length = false;
-    float scale = 1;
+    std::array<float, 3> scale = {1,1,1};
 
     while ((opt = getopt(argc, argv, "axh:m:f:is:")) != -1) {
       switch (opt) {
@@ -105,8 +105,25 @@ int main(int argc, char **argv)
         ignore_length = true;
         break;
       case 's':
-        scale = (float)atof(optarg);
-        break;
+        {
+          std::string sarg(optarg);
+          char delim = ',';
+          float s;
+
+          size_t dim = 0;
+          size_t pos = 0;
+          while((pos = sarg.find(delim)) != std::string::npos) {
+            s = (float)atof(sarg.substr(0,pos).c_str());
+            scale[dim++]*=s;
+            sarg.erase(0,pos+1);
+          }
+
+          s = (float)atof(sarg.c_str());
+          while (dim<3)
+            scale[dim++]*=s;
+
+          break;
+        }
       default: /* '?' */
         fprintf(stderr, "usage: %s [-x] [-a] [-h <header_string>] [-m <steno_msg>] [-f <steno_msg_file>] [-s <scale_factor>] < meshfile\n",
                 argv[0]);
