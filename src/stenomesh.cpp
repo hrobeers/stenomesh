@@ -17,11 +17,13 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 #include "stlio.hpp"
 #include "plyio.hpp"
 #include "mesh.hpp"
 #include "stringtrim.hpp"
+#include "meshproc.hpp"
 
 using namespace stenomesh;
 
@@ -74,8 +76,10 @@ int main(int argc, char **argv)
     std::string steno_msg;
     bool ignore_length = false;
     std::array<float, 3> scale = {1,1,1};
+    float collapse_len = NAN;
+    float collapse_perc = NAN;
 
-    while ((opt = getopt(argc, argv, "axh:m:f:is:")) != -1) {
+    while ((opt = getopt(argc, argv, "axh:m:f:is:c:p:")) != -1) {
       switch (opt) {
       case 'a':
         attr = true;
@@ -124,8 +128,14 @@ int main(int argc, char **argv)
 
           break;
         }
+      case 'c':
+        collapse_len = (float)atof(optarg);
+        break;
+      case 'p':
+        collapse_perc = (float)atof(optarg);
+        break;
       default: /* '?' */
-        fprintf(stderr, "usage: %s [-x] [-a] [-h <header_string>] [-m <steno_msg>] [-f <steno_msg_file>] [-s <scale_factor>] < meshfile\n",
+        fprintf(stderr, "usage: %s [-x] [-a] [-h <header_string>] [-m <steno_msg>] [-f <steno_msg_file>] [-s <scale_factor>] [-c <collapse_length>] [-p <collapse_perc_smallest_bbox_edge>] < meshfile\n",
                 argv[0]);
         exit(EXIT_FAILURE);
       }
@@ -182,6 +192,21 @@ int main(int argc, char **argv)
       mesh.comment = header;
     if (steno_msg.size()>0)
       mesh.steno_msg = steno_msg;
+
+    // Optionally merge close vertices
+    // TODO vertex merge currently does not support dist==0
+    if (!std::isnan(collapse_len) && collapse_len>0) {
+      //std::cerr << "merge c" << std::endl;
+      vertex_merge(mesh, collapse_len);
+    }
+    if (!std::isnan(collapse_perc) && collapse_perc>0) {
+      //std::cerr << "merge p" << std::endl;
+      auto bbox = bounding_box(mesh);
+      float min_edge_len = bbox[1].front()-bbox[0].front();
+      for (int i=1; i<3; i++) min_edge_len = std::min(min_edge_len, bbox[1][i]-bbox[0][i]);
+      // collapse_perc as % of min bbox dim
+      vertex_merge(mesh, collapse_perc/100 * min_edge_len);
+    }
 
     if (extract)
       std::cout << mesh.steno_msg;

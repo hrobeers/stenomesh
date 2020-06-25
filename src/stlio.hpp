@@ -57,7 +57,7 @@ namespace stenomesh {
       is.read(reinterpret_cast<char*>(&v2), sizeof(v2));
       is.read(reinterpret_cast<char*>(&v3), sizeof(v3));
 
-      size_t idx = mesh.faces.size()*3;
+      uint32_t idx = mesh.faces.size()*3;
       mesh.faces.push_back({idx, idx+1, idx+2});
       mesh.vertices.push_back(v1);
       mesh.vertices.push_back(v2);
@@ -88,7 +88,7 @@ namespace stenomesh {
   }
 
   inline std::istream& read_until(std::istream &is, const char* str) {
-    size_t idx = 0;
+    uint32_t idx = 0;
     while (!is.eof()) {
       char c = is.get();
       if (str[idx]==0)
@@ -121,7 +121,7 @@ namespace stenomesh {
       read_until(is, "vertex");
       vertexio::read_next_vertex(is, v3);
 
-      size_t idx = mesh.faces.size()*3;
+      uint32_t idx = mesh.faces.size()*3;
       mesh.faces.push_back({idx, idx+1, idx+2});
       mesh.vertices.push_back(v1);
       mesh.vertices.push_back(v2);
