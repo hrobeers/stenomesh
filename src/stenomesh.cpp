@@ -76,10 +76,11 @@ int main(int argc, char **argv)
     std::string steno_msg;
     bool ignore_length = false;
     std::array<float, 3> scale = {1,1,1};
+    std::array<float, 3> valid = {0,0,0};
     float collapse_len = NAN;
     float collapse_perc = NAN;
 
-    while ((opt = getopt(argc, argv, "axh:m:f:is:c:p:")) != -1) {
+    while ((opt = getopt(argc, argv, "axh:m:f:is:c:p:v:")) != -1) {
       switch (opt) {
       case 'a':
         attr = true;
@@ -134,8 +135,29 @@ int main(int argc, char **argv)
       case 'p':
         collapse_perc = (float)atof(optarg);
         break;
+      case 'v':
+        {
+          // TODO deduplicate code with 's'
+          std::string sarg(optarg);
+          char delim = ',';
+          float v;
+
+          size_t dim = 0;
+          size_t pos = 0;
+          while((pos = sarg.find(delim)) != std::string::npos) {
+            v = (float)atof(sarg.substr(0,pos).c_str());
+            valid[dim++]=v;
+            sarg.erase(0,pos+1);
+          }
+
+          v = (float)atof(sarg.c_str());
+          while (dim<3)
+            valid[dim++]=v;
+
+          break;
+        }
       default: /* '?' */
-        fprintf(stderr, "usage: %s [-x] [-a] [-h <header_string>] [-m <steno_msg>] [-f <steno_msg_file>] [-s <scale_factor>] [-c <collapse_length>] [-p <collapse_perc_smallest_bbox_edge>] < meshfile\n",
+        fprintf(stderr, "usage: %s [-x] [-a] [-h <header_string>] [-m <steno_msg>] [-f <steno_msg_file>] [-s <scale_factor>] [-c <collapse_length>] [-p <collapse_perc_smallest_bbox_edge>] [-v <validation_size>] < meshfile\n",
                 argv[0]);
         exit(EXIT_FAILURE);
       }
@@ -196,16 +218,25 @@ int main(int argc, char **argv)
     // Optionally merge close vertices
     // TODO vertex merge currently does not support dist==0
     if (!std::isnan(collapse_len) && collapse_len>0) {
-      //std::cerr << "merge c" << std::endl;
       vertex_merge(mesh, collapse_len);
     }
     if (!std::isnan(collapse_perc) && collapse_perc>0) {
-      //std::cerr << "merge p" << std::endl;
       auto bbox = bounding_box(mesh);
       float min_edge_len = bbox[1].front()-bbox[0].front();
       for (int i=1; i<3; i++) min_edge_len = std::min(min_edge_len, bbox[1][i]-bbox[0][i]);
       // collapse_perc as % of min bbox dim
       vertex_merge(mesh, collapse_perc/100 * min_edge_len);
+    }
+
+    if (std::any_of(valid.cbegin(), valid.cend(), [](float f){ return f!=0; })) {
+      auto bbox = bounding_box(mesh); // TODO do not recalc if already calculated
+      int i=0;
+      if (std::any_of(valid.cbegin(), valid.cend(), [&i, &bbox](float f) {
+                                                      return bbox[1][i]-bbox[0][i++] < f;
+                                                    })) {
+        std::cerr << "Mesh validation failed" << std::endl;
+        exit(EXIT_FAILURE);
+      }
     }
 
     if (extract)
@@ -219,5 +250,6 @@ int main(int argc, char **argv)
   }
   catch (const std::exception & e) {
     std::cerr << "Critical error: " << e.what() << std::endl;
+    exit(EXIT_FAILURE);
   }
 }
